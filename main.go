@@ -30,13 +30,18 @@ func main() {
 		os.Exit(1)
 	}
 
-	logFile, err := os.Create("log")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Could not open log file: %s\n", err.Error())
-		os.Exit(1)
+	var logger *slog.Logger
+	if os.Getenv("GED_LOG") != "" {
+		logFile, err := os.Create("log")
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Could not open log file: %s\n", err.Error())
+			os.Exit(1)
+		}
+		defer logFile.Close()
+		logger = slog.New(slog.NewJSONHandler(logFile, nil))
+	} else {
+		logger = slog.New(slog.NewJSONHandler(io.Discard, nil))
 	}
-	defer logFile.Close()
-	logger := slog.New(slog.NewJSONHandler(logFile, nil))
 	slog.SetDefault(logger)
 
 	p := tea.NewProgram(model{mode: NORMAL_MODE, text: string(contents)})
